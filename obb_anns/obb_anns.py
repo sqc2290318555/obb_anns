@@ -171,7 +171,7 @@ class OBBAnns:
         :type proposal_file: str
         """
         assert self.img_info is not None, 'Annotations must be loaded before ' \
-                                          'proposals'
+                                              'proposals'
         self.proposal_file = proposal_file
         print('loading proposals...')
         start_time = time()
@@ -191,8 +191,9 @@ class OBBAnns:
             'score': []
         }
         bbox_len = len(props['proposals'][0]['bbox'])
-        assert bbox_len in (4, 8), 'bbox proposal is malformed. \'bbox\' ' \
-                                   'must have a length of 4 or 8.'
+        assert bbox_len in {4, 8}, (
+            'bbox proposal is malformed. \'bbox\' ' 'must have a length of 4 or 8.'
+        )
         if bbox_len == 8:
             self.props_oriented = True
 
@@ -273,9 +274,8 @@ class OBBAnns:
         if img_idx is not None:
             return self.get_ann_ids(self.img_info[img_idx]['ann_ids'],
                                     ann_set_filter)
-        else:
-            ann_ids = self.img_info[self.img_idx_lookup[img_id]]['ann_ids']
-            return self.get_ann_ids(ann_ids, ann_set_filter)
+        ann_ids = self.img_info[self.img_idx_lookup[img_id]]['ann_ids']
+        return self.get_ann_ids(ann_ids, ann_set_filter)
 
     def get_cats(self):
         """Just returns the self.cat_info dictionary.
@@ -496,9 +496,9 @@ class OBBAnns:
                                  'precision': 0,
                                  'recall': 0}
                 for _, eval_dict in tresh_dict.items():
-                    for key in averaged_dict.keys():
+                    for key in averaged_dict:
                         averaged_dict[key] += eval_dict[key]
-                for key in averaged_dict.keys():
+                for key in averaged_dict:
                     averaged_dict[key] = averaged_dict[key] / len(tresh_dict)
                 results_dict[cls_key] = averaged_dict
         return results_dict
@@ -529,16 +529,13 @@ class OBBAnns:
 
             nr_gt = len(ann_gt_idxs)
 
-            if nr_gt > 0:
-                recall = tp_sum / nr_gt
-            else:
-                recall = tp_sum * 0
+            recall = tp_sum / nr_gt if nr_gt > 0 else tp_sum * 0
             precision = tp_sum / (fp_sum + tp_sum + np.spacing(1))
 
             # pad vectors for computation
             average_precision = self._average_precision(recalls=recall,
                                                         precisions=precision)
-            
+
             metrics[iou_thr] = {'ap': average_precision,
                                 'precision': np.average(precision),
                                 'recall': np.average(recall)}
@@ -674,18 +671,14 @@ class OBBAnns:
         )
         anns = self.ann_info['cat_id'].apply(lambda x: x[annotation_set_index])
         anns_count = anns.value_counts()
-        return_dict = {}
-        for (key, value) in self.cat_info.items():
-            if value['annotation_set'] not in self.chosen_ann_set \
-                    or value['name'] in self.classes_blacklist:
-                continue
-
-            if str(key) in anns_count.index:
-                return_dict[value['name']] = anns_count[str(key)]
-            else:
-                return_dict[value['name']] = 0
-
-        return return_dict
+        return {
+            value['name']: anns_count[str(key)]
+            if str(key) in anns_count.index
+            else 0
+            for key, value in self.cat_info.items()
+            if value['annotation_set'] in self.chosen_ann_set
+            and value['name'] not in self.classes_blacklist
+        }
 
     @staticmethod
     def parse_comments(comment):
@@ -790,7 +783,7 @@ class OBBAnns:
             # First we need to get the new color values from colorcet
             colors = [ImageColor.getrgb(i) for i in cc.glasbey]
             colors = np.array(colors).reshape(768, ).tolist()
-            colors[0:3] = [0, 0, 0]  # Set background to black
+            colors[:3] = [0, 0, 0]
 
             # Then put the palette
             overlay.putpalette(colors)
