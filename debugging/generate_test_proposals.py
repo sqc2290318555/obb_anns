@@ -38,8 +38,7 @@ def main(gt_fp: str):
         json.dump(proposals, prop_file)
 
     # Now randomly "forget" certain proposals
-    selector = [True if random() > 0.2 else False
-                for _ in range(len(gt.ann_info))]
+    selector = [random() > 0.2 for _ in range(len(gt.ann_info))]
 
     bboxes = gt.ann_info[['bbox', 'cat_id', 'img_id']][selector].apply(
         fudge_bboxes, 1, result_type='expand'
